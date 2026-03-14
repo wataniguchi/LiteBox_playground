@@ -1,0 +1,8 @@
+!.gitignore
+/litebox/
+
+# others
+*~
+*.swp
+.DS_Store
+.Trashes
