@@ -1,5 +1,7 @@
 !.gitignore
 /litebox/
+litebox-*.tar
+litebox_runner_*
 
 # others
 *~

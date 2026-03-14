@@ -23,18 +23,18 @@ COPY ./litebox .
 ENV DEBIAN_FRONTEND=noninteractive
 RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
-    --mount=type=cache,target=/app/target,sharing=locked \
     apt-get update && apt-get install -y libclang-dev \
     && cargo build --release
 
-# Test LiteBox library
+# Test LiteBox and then allow further testing and exploration in the container
 FROM chef AS test
 COPY ./litebox .
+COPY --from=builder /app/target/ target/
 ENV DEBIAN_FRONTEND=noninteractive
 RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
-    --mount=type=cache,target=/app/target,sharing=locked \
     apt-get update && apt-get install -y iproute2 \
-    && cargo test --release --package litebox --lib -- --skip nine_p
+    && cargo test --release --package litebox_runner_linux_userland test_syscall_rewriter \
+    && cargo test --release --package litebox_packager
 
 CMD ["/bin/bash", "-c", "./litebox_platform_linux_userland/scripts/tun-setup.sh && tail -f /dev/null"]

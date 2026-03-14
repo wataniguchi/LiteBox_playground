@@ -7,13 +7,9 @@
 
 REPO_OWNER="microsoft"
 REPO_NAME="litebox"
-EXPECTED_COMMIT="380364d63202e1d4d119641f5b07e7a43a72c29b" # Replace with the actual expected commit hash
+EXPECTED_COMMIT="4583328c92e117470523c04b1230f547173f499e" # Replace with the actual expected commit hash
 NAME_IMAGE="$REPO_NAME:latest"
 NAME_CONTAINER="$REPO_NAME-container"
-
-# Preserve the current directory and change to the parent directory of the script
-DIR_SCRIPT="$(pwd)"
-cd ..
 
 # Clone the repo if it doesn't exist
 if [ ! -d "$REPO_NAME" ]; then
@@ -43,7 +39,10 @@ fi
 #   services that require network access or manipulation.
 #   i.e., the container needs TUN device for LiteBox.
 if [ ! "$(docker image ls -q "$NAME_IMAGE")" ]; then
-    docker build --platform linux/amd64 -t "$NAME_IMAGE" -f "$DIR_SCRIPT/Dockerfile" .
+    # As of 2026-3-14, LiteBox supports only X86/X86_64 architecture,
+    # so we need to specify the platform for the build.
+    # Note: See litebox/src/mm/exceptaion_table.rs for the target architectures.
+    docker build --platform linux/amd64 -t "$NAME_IMAGE" .
 fi
 
 # If the container exists...
@@ -69,6 +68,3 @@ docker exec -it "$NAME_CONTAINER" /bin/bash
 echo "[-] Stopping and removing container $NAME_CONTAINER..."
 docker stop "$NAME_CONTAINER"
 docker rm "$NAME_CONTAINER"
-
-# Return to the original directory
-cd "$DIR_SCRIPT"
