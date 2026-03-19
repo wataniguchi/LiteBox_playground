@@ -2,6 +2,8 @@
 /litebox/
 litebox-*.tar
 litebox_runner_*
+tun-setup.sh
+_common.sh
 
 # others
 *~

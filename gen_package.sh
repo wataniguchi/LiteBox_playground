@@ -67,10 +67,10 @@ fi
 
 # If the container exists...
 if [ "$(docker ps -aq -f name="$NAME_CONTAINER")" ]; then
-  echo container $NAME_CONTAINER exists
+  echo "[+] container $NAME_CONTAINER exists"
   # and if running...
   if [ "$(docker ps -q -f name="$NAME_CONTAINER")" ]; then
-    echo container $NAME_CONTAINER running
+    echo "[+] container $NAME_CONTAINER running"
     # Stop the container
     docker stop "$NAME_CONTAINER"
   fi
@@ -79,22 +79,28 @@ if [ "$(docker ps -aq -f name="$NAME_CONTAINER")" ]; then
 fi
 
 # Run the container
-docker run  --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun --detach --name "$NAME_CONTAINER" "$NAME_IMAGE"
+docker run --detach --name "$NAME_CONTAINER" "$NAME_IMAGE" > /dev/null
 CONTAINER_ID=$(docker ps -q -f name="$NAME_CONTAINER")
 
 # Create a package name using the binary path, e.g., /usr/bin/date -> litebox-_usr_bin_date.tar
 PACKAGE_NAME="litebox-$(echo "$BINARY_PATH" | tr '/' '_').tar"
 # Exec into the container
-docker exec -it "$NAME_CONTAINER" /app/target/release/litebox_packager --verbose -o /app/"$PACKAGE_NAME" "$BINARY_PATH"
+docker exec -it "$NAME_CONTAINER" /app/litebox/target/release/litebox_packager --verbose -o /app/"$PACKAGE_NAME" "$BINARY_PATH"
 
 # Copy the generated package from the container to the host
 docker cp "$CONTAINER_ID:/app/$PACKAGE_NAME" "./$PACKAGE_NAME"
 echo "[+] Package generated and copied to host: $PACKAGE_NAME"
 
 # Also copy litebox_runner_linux_userland from the container to the host for running the generated package on Linux Userland.
-docker cp "$CONTAINER_ID:/app/target/release/litebox_runner_linux_userland" .
+docker cp "$CONTAINER_ID:/app/litebox/target/release/litebox_runner_linux_userland" .
 chmod +x litebox_runner_linux_userland
 echo "[+] litebox_runner_linux_userland copied to host."
+
+# Also copy tun-setup.sh from the container to the host for setting up TUN device on Linux Userland.
+docker cp "$CONTAINER_ID:/app/litebox/litebox_platform_linux_userland/scripts/tun-setup.sh" .
+docker cp "$CONTAINER_ID:/app/litebox/litebox_platform_linux_userland/scripts/_common.sh" .
+chmod +x tun-setup.sh
+echo "[+] tun-setup.sh copied to host."
 
 # Stop and remove the container after use
 echo "[-] Stopping and removing container $NAME_CONTAINER..."

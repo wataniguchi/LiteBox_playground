@@ -47,10 +47,10 @@ fi
 
 # If the container exists...
 if [ "$(docker ps -aq -f name="$NAME_CONTAINER")" ]; then
-  echo container $NAME_CONTAINER exists
+  echo "[+] container $NAME_CONTAINER exists"
   # and if running...
   if [ "$(docker ps -q -f name="$NAME_CONTAINER")" ]; then
-    echo container $NAME_CONTAINER running
+    echo "[+] container $NAME_CONTAINER running"
     # Stop the container
     docker stop "$NAME_CONTAINER"
   fi
@@ -58,8 +58,9 @@ if [ "$(docker ps -aq -f name="$NAME_CONTAINER")" ]; then
   docker rm "$NAME_CONTAINER"
 fi
 
-# Run the container
-docker run  --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun --detach --name "$NAME_CONTAINER" "$NAME_IMAGE"
+# Run the container with the TUN device for LiteBox using host networking.
+docker run --network=host --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun --detach --name "$NAME_CONTAINER" "$NAME_IMAGE" > /dev/null
+#docker run --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun --detach --name "$NAME_CONTAINER" "$NAME_IMAGE" > /dev/null
 
 # Exec into the container
 docker exec -it "$NAME_CONTAINER" /bin/bash

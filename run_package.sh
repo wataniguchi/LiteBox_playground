@@ -45,5 +45,22 @@ if [ ! -e "litebox_runner_linux_userland" ]; then
     exit 1
 fi
 
+# Check if tun-setup.sh exists, otherwise exit
+if [ ! -e "tun-setup.sh" ]; then
+    echo "[X] Error: tun-setup.sh does not exist. Executing the gen_package.sh script should also copy the tun-setup.sh from the container to the host."
+    exit 1
+fi
+
+# Check if tun99 device exists, otherwise execute tun-setup.sh to set up the TUN device for LiteBox on Linux Userland.
+if ! ip tuntap show | grep "^tun99:" &> /dev/null; then
+    echo "[!] Warning: TUN device /dev/net/tun99 does not exist."
+    sudo ./tun-setup.sh # Set up the TUN device for LiteBox on Linux Userland.
+fi
+
 # Run the binary using litebox_runner_linux_userland
-./litebox_runner_linux_userland --unstable --interception-backend rewriter --initial-files "$PACKAGE_NAME" --program-from-tar "$BINARY_PATH" "$@"
+echo "[+] Running $BINARY_PATH using litebox_runner_linux_userland with package $PACKAGE_NAME..."
+./litebox_runner_linux_userland --unstable --tun-device-name tun99 --initial-files "$PACKAGE_NAME" --program-from-tar "$BINARY_PATH" "$@"
+
+# Remove the TUN device after use
+echo "[-] Removing TUN device tun99..."
+sudo ./tun-setup.sh -d
